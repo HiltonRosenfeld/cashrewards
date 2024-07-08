@@ -14,6 +14,7 @@ import unicodedata
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+# Initialise Chrome driver
 driver = webdriver.Chrome()
 #driver.implicitly_wait(10)
 

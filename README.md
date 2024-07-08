@@ -17,3 +17,5 @@
 ### Langflow
 `langflow run --env-file ~/Development/DataStax/Langflow/.env_ragstack`
 
+### Streamlit
+`streamlit run app_cashrewards.py`

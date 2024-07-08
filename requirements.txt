@@ -1,0 +1,5 @@
+ragstack-ai
+bs4
+requests
+streamlit
+python-dotenv
