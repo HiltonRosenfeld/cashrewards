@@ -5,12 +5,13 @@ from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 from langchain_astradb import AstraDBVectorStore
 from langchain.prompts.chat import ChatPromptTemplate
-from langchain.memory import ConversationBufferWindowMemory, AstraDBChatMessageHistory
+from langchain.memory import ConversationBufferWindowMemory
+from langchain_community.chat_message_histories import AstraDBChatMessageHistory
 from langchain.schema import HumanMessage, AIMessage
 from langchain.schema.runnable import RunnableMap
-from langchain.callbacks.base import BaseCallbackHandler
+#from langchain.callbacks.base import BaseCallbackHandler
 
-import tempfile
+#import tempfile
 
 import streamlit as st
 
@@ -31,15 +32,6 @@ os.environ["LANGCHAIN_TRACING_V2"] = "true"
 print("Started")
 
 
-# Streaming call back handler for responses
-class StreamHandler(BaseCallbackHandler):
-    def __init__(self, container, initial_text=""):
-        self.container = container
-        self.text = initial_text
-
-    def on_llm_new_token(self, token: str, **kwargs):
-        self.text += token
-        self.container.markdown(self.text + "▌")
 
 #################
 ### Constants ###
@@ -104,7 +96,7 @@ def logout():
     #load_chat_history.clear()
     #load_memory.clear()
     load_retriever.clear()
-    
+
 
 # Check for username/password and set the username accordingly
 if not check_password():
@@ -120,7 +112,10 @@ username = st.session_state.user
 # handles stream response back from LLM
 def stream_parser(stream):
     for chunk in stream:
-        yield chunk['response']
+        #yield chunk["response"]                # for Ollama
+        #yield chunk.choices[0].delta.content   # for openAI direct
+        yield chunk.content                     # for openAI via Langchain
+
 
 
 #######################
@@ -154,9 +149,10 @@ def load_retriever():
     print("load_retriever")
     # Get the Retriever from the Vectorstore
     return vectorstore.as_retriever(
-        search_kwargs={"k": top_k_vectorstore},
-        #filter = {"metadata.brand": "LG"},
-        #{"price": {"$lt": 100}},
+        search_kwargs={
+            "k": top_k_vectorstore,
+            #"filter": {"brand": "Apple"},
+        },
     )
 
 # Cache Chat Model for future runs
@@ -212,35 +208,37 @@ def load_policy(policy_id="the good guys"):
 
 # Cache prompt
 # Use the previous chat history to answer the question:
-#{chat_history}
-#When I write BEGIN DIALOGUE you will enter this role, and all further input from the "Human:" will be from a user seeking a sales or customer support question.
+# {chat_history}
+# When I write BEGIN DIALOGUE you will enter this role, and all further input from the "Human:" will be from a user seeking a sales or customer support question.
+# If you don't know the answer, just say 'I do not know the answer'.
 
 @st.cache_data()
 def load_prompt():
     print("load_prompt")
-    template = """You're a helpful sales assistant tasked to help users with online shopping that are eligible for cashrewards. 
-If the user asks a question about a product, you should provide a recommendation, unless the product is ineligible.
-If the user asks a question about the policy, you should answer using information in the Policy below.
-Do not include any information other than what is provided in the context below.
+    template = """You are a shopping assistant for a business that provides cash rewards when shopping. 
+Your goal is to assist the user based on their query, either by recommending the best products based on the product details provided or by explaining the rewards process and policies based on the company's cash reward policy.
+Here are the details:
 
-Include an image of the product taken from the img attribute in the metadata.
-Include the price of the product taken from the price attribute in the metadata.
-Include a link to buy each item you recommend taken from the source attribute in the metadata. Here is a sample buy link:
-Buy Now: [Product Name](https://www.thegoodguys.com.au/product-name)
-If you don't know the answer, just say 'I do not know the answer'.
-
-Use the following context to answer the question:
-{context}
-
-Some products are not eligble for cashrewards, based on the Policy included below. 
-If the product brand is listed as ineligible for Cashback in the Policy below, then do not recommend that product and inform the user.
-Policy:
+### Cash Reward Policy:
 {policy}
 
-Question:
+### Product Details:
+{context}
+
+### User Query:
 {question}
 
-Answer in English.
+### Instructions:
+Based on the user query, provide an appropriate response using only the information provided in the cash reward policy and the product details:
+- If the user asks a question about products, recommend the best products from the list provided, considering factors such as category, brand, and price.
+    Include an image of the product taken from the img attribute in the metadata.
+    Include the price of the product taken from the price attribute in the metadata.
+    Include the amount of cash rewards the user will receive when purchasing based on the policy percentage.
+    Include a link to buy each item you recommend taken from the source attribute in the metadata. Here is a sample buy link:
+    Buy Now: [Product Name](https://www.thegoodguys.com.au/product-name)
+- If the user asks a question about how the rewards process works or about the rewards policies, answer using the information from the cash rewards policy. Do not recommend any products.
+
+Respond accordingly to the user's query using only the information provided.
 """
 
     return ChatPromptTemplate.from_messages([("system", template)])
@@ -260,7 +258,7 @@ if "messages" not in st.session_state:
 ### Main ###
 ############
 st.set_page_config(
-    page_title="Cash Rewards Shopping Assistant",
+    page_title="CashRewards Shopping Assistant",
     initial_sidebar_state="expanded",
     #initial_sidebar_state="collapsed"
     )
@@ -316,10 +314,6 @@ with st.sidebar:
         'openai.gpt-4o',
         'openai.gpt-4',
         'openai.gpt-3.5',
-        #'meta.llama2-70b-chat-v1',
-        #'meta.llama2-13b-chat-v1',
-        #'amazon.titan-text-express-v1',
-        #'anthropic.claude-v2', # Claude is not working using this code.
         ])
     model = load_model(model_id)
 
@@ -345,8 +339,6 @@ if question := st.chat_input("How can I help you?"):
     # Get the results from Langchain
     print("Get AI response")
     with st.chat_message("assistant"):
-        # UI placeholder to start filling with agent response
-        response_placeholder = st.empty()
 
         #history = memory.load_memory_variables({})
         #print(f"Using memory: {history}")
@@ -357,21 +349,15 @@ if question := st.chat_input("How can I help you?"):
             'policy': lambda x: x['policy'],
             'question': lambda x: x['question']
         })
-        print(f"Using inputs: {inputs}")
+        #print(f"Using inputs: {inputs}")
 
         chain = inputs | prompt | model
-        print(f"Using chain: {chain}")
+        #print(f"Using chain: {chain}")
 
         # Call the chain and stream the results into the UI
-        #response = chain.invoke({'question': question, 'chat_history': history}, config={'callbacks': [StreamHandler(response_placeholder)], "tags": [username]})
-        response = chain.invoke({'question': question, 'policy': policy}, config={'callbacks': [StreamHandler(response_placeholder)], "tags": [username]})
-        print(f"Response: {response}")
-        #print(embedding.embed_query(question))
-        content = response.content
-
-        # Write the final answer without the cursor
-        response_placeholder.markdown(content)
-
+        #response = chain.stream({'question': question, 'chat_history': history}, config={'callbacks': [StreamHandler(response_placeholder)], "tags": [username]})
+        response = chain.stream({'question': question, 'policy': policy}, config={"tags": [username]})
+        content = st.write_stream(stream_parser(response))
 
         # Add the result to memory
         #memory.save_context({'question': question}, {'answer': content})

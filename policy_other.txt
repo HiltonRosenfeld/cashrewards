@@ -1,7 +1,12 @@
 Important: Gift cards can be used as payment with Other.
 
-Cashback is ineligible on the following:
- - Products from LG.
+1. **Brands Not Eligible for Reward:**
+    - LG
+
+2. **Percentage of Cash Reward by Category:**
+    All: 15%
+
+3. **Cashback is ineligible on the following:**
  - Purchases using coupon codes not listed on Cashrewards.
  - Purchase of gift cards, and any amount paid with gift cards.
  - Items that are cancelled, returned, exchanged or refunded.
