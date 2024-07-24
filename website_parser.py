@@ -148,11 +148,11 @@ def website_parser(job_url: str):
 
 
         # Image
-        #product_gallery = soup.find('section', {'class': re.compile('product-gallery')})
+        # section id="slickCarousel"
         slickCarousel = soup.find('section', {'id': 'slickCarousel'})
         if slickCarousel is not None:
-            # <img alt='TCL 32" S5400 FHD Android Smart TV 23  32S5400AF' class="product-image-main" data-lazy="//thegoodguys.sirv.com/products/50085261/50085261_866872.PNG?scale.height=505&amp;scale.width=773&amp;canvas.height=505&amp;canvas.width=773&amp;canvas.opacity=0&amp;q=90"></img>
-            image = slickCarousel.find('img')
+            # Find the last image in the SLick Carousel
+            image = slickCarousel.find_all('img')[-1]
             if image is not None:
                 try:
                     item_img = image['data-lazy']

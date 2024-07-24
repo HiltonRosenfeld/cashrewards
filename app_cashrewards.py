@@ -38,7 +38,7 @@ print("Started")
 #################
 
 # Define the number of docs to retrieve from the vectorstore and memory
-top_k_vectorstore = 8
+top_k_vectorstore = 4
 top_k_memory = 1
 
 ###############
@@ -230,15 +230,19 @@ Here are the details:
 
 ### Instructions:
 Based on the user query, provide an appropriate response using only the information provided in the cash reward policy and the product details:
-- If the user asks a question about products, recommend the best products from the list provided, considering factors such as category, brand, and price.
-    Include an image of the product taken from the img attribute in the metadata.
-    Include the price of the product taken from the price attribute in the metadata.
-    Include the amount of cash rewards the user will receive when purchasing based on the policy percentage.
-    Include a link to buy each item you recommend taken from the source attribute in the metadata. Here is a sample buy link:
-    Buy Now: [Product Name](https://www.thegoodguys.com.au/product-name)
+- If the user asks a question about products, recommend the best products from the list provided, considering factors such as category, brand, and price, and excluding any products from brands not eligible for rewards.
 - If the user asks a question about how the rewards process works or about the rewards policies, answer using the information from the cash rewards policy. Do not recommend any products.
+- Use only the information provided in the policy and product details to generate the response.
+
+### Recommendations:
+- Only recommend products from eligible brands (i.e., brands not listed as not eligible in the policy).
+- Include an image of the product taken from the img attribute in the metadata.
+- Include the price of the product taken from the price attribute in the metadata.
+- Include the amount of cash rewards the user will receive when purchasing based on the policy percentage and only if the brand is eligible.
+- Include a link to buy each item you recommend taken from the source attribute in the metadata. Here is a sample buy link: Buy Now: [Product Name](https://www.thegoodguys.com.au/product-name)
 
 Respond accordingly to the user's query using only the information provided.
+If you do not know the answer, you can say 'I do not know the answer'.
 """
 
     return ChatPromptTemplate.from_messages([("system", template)])

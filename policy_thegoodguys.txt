@@ -1,11 +1,19 @@
 1. **Brands Not Eligible for Reward:**
-   - Apple, ASKO, Miele, AEG, Neff, Bertazzoni, FFalcon, La Germania, Loewe, Playstation 5, Playstation 5 Digital Edition, Xbox Series X 1TB
+   - Apple
+   - ASKO
+   - Miele
+   - AEG
+   - Neff
+   - Bertazzoni
+   - FFalcon
+   - La Germania
+   - Loewe
+   - Playstation 5
+   - Playstation 5 Digital Edition
+   - Xbox Series X 1TB
 
 2. **Percentage of Cash Reward by Category:**
-   - Electronics: 5%
-   - Clothing: 10%
-   - Groceries: 2%
-   - Home Appliances: 7%
+    All: 13%
 
 3. **Other Reward Eligibility Details:**
    - Gift cards can be used as payment with The Good Guys, however their value is excluded from cashback calculations. Only the portion that's paid without gift cards is eligible for cashback.
